@@ -29,13 +29,16 @@ class TrackSpider(CrawlSpider):
     rules = [
         Rule(LinkExtractor(allow='https://law.judicial.gov.tw/FJUD/qryresultlst.aspx?q=.*&sort=DS&page=.*'),
              callback='parse', follow=True),
-        # Rule()
     ]
 
     def parse(self, response):
-        response.text
 
-        yield scrapy.Request(url, callback=self.parse_item)
+        judgement_links = response.xpath("//a/@href")
+
+        for judgement_link in judgement_links:
+            url = judgement_link.extract()
+
+            yield scrapy.Request("https://law.judicial.gov.tw"+url, callback=self.parse_item)
 
     def parse_item(self, response):
         item = HarassmentItem()
