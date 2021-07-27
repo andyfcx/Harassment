@@ -1,4 +1,18 @@
 import re
+import pandas as pd
+
+def read_csv_to_fit(file_path):
+    """Preprocessing the csv files, make them """
+    df = pd.read_csv(file_path, names=['court', 'datetime', 'case_number', 'accuse_', 'reason_'])
+    df['reason'] = df.reason_.apply(context_clean) # Clean text
+    
+    df['accuse'] = df.accuse_.apply(reason_normalize).apply(reserve) # Convert accuse into 0, 0.5, 1
+
+    df.drop(columns=['court, datetime, case_number, accuse_', 'reason_'], axis=1, inplace=True)
+    return df
+
+def context_clean(s:str):
+    return re.sub('</br>|\s{1,}|\n','', s)
 
 def reason_normalize(s:str):
     return re.sub("\n|等$|違反|罪$", '', s)
