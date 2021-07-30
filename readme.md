@@ -1,8 +1,8 @@
 ## 使用工具
-SnowNLP: 提供情感分析、文章摘要
-CKIP: 切詞
-XGBoost: 分類
-gensim: Word2Vec
+ - SnowNLP: 提供情感分析、文章摘要、切詞
+ - CKIP: 切詞
+ - XGBoost: 分類
+ - gensim: Word2Vec
 ## 判斷流程參考
 1. 先 filter 案由
     1. 可保留的：

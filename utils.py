@@ -1,5 +1,6 @@
 import re
 import pandas as pd
+from zhon.hanzi import punctuation
 
 def read_csv_to_fit(file_path):
     """Preprocessing the csv files, make them """
@@ -11,8 +12,12 @@ def read_csv_to_fit(file_path):
     df.drop(columns=['court, datetime, case_number, accuse_', 'reason_'], axis=1, inplace=True)
     return df
 
-def context_clean(s:str):
-    return re.sub('</br>|\s{1,}|\n','', s)
+def clean_context(s:str):
+    # s = re.sub('|，|。|「|」|（|）|：|；|\'|、', ' ', s)
+    return re.sub('</br>|\s{1,}|\n|\'','', s)
+
+def clean_punctuation(s):
+    return re.sub(f"[{punctuation}]",' ', s)
 
 def reason_normalize(s:str):
     return re.sub("\n|等$|違反|罪$", '', s)
