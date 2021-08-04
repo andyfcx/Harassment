@@ -1,6 +1,5 @@
 import os
 import pandas as pd
-from utils import clean_context, reason_normalize, reserve, get_sentiments, get_summary
 from xgboost import XGBClassifier
 
 
@@ -20,6 +19,14 @@ def chg_sep(file):
 # [fail] 司法院－刑事補償.csv, 'utf-8' codec can't decode byte 0x8b in position 1: invalid start byte
 
 
+def accuse_quick_conversion(accuse):
+    if accuse==0:
+        return 0
+    elif accuse==1:
+        return 1
+    else:
+        return accuse
+
 class LabelHarassment():
     # sentence/ : accuse,reason,sentence
     # to_predict/ : 'court', 'datetime', 'case_number', 'accuse_', 'reason_'
@@ -28,29 +35,40 @@ class LabelHarassment():
         self.xgbc = XGBClassifier()
         self.xgbc_model_path = "trained_model/m1.model"
         self.load_xgbc_model()
-        # df = pd.read_csv(file_path, sep=';', names=['court', 'datetime', 'case_number', 'accuse_', 'reason_'])
         self.df = pd.read_csv(file_path, sep=',')
         self.prefit()
         self.predict(fname)
 
-        # return self.df_new
+    # @classmethod
+    # def dfinit(cls, df, fname):
+    #     cls.file_path = fname
+    #     cls.df = df
+    #     cls.__init__(fname)
+
 
     def load_xgbc_model(self):
         self.xgbc.load_model(self.xgbc_model_path)
 
     def prefit(self):
-        self.df['label'] = self.df.accuse.apply(lambda x: 0 if x == 0 else x)
+        """
+        If accused is 0, apply it to label, else, remain label undetermined
+        """
+        self.df['label'] = self.df.accused.apply(accuse_quick_conversion)
 
     def predict(self, fname):
-        for _, row in self.df_new[self.df_new.label != 0].iterrows():
-            row['label'] = self.xgbc.predict(row[['accused', 'combined_sentiments']])
+        """Predict using XGBClassifier, exclude pre-labeled 0 and 1"""
+        self.df.loc[(self.df.label != 0) & (self.df.label != 1), 'label'] = self.xgbc.predict(self.df[(self.df.label != 0) & (self.df.label != 1)][['accused', 'combined_sentiments']])
 
         self.df.to_csv(f"result/{fname}", index=False)
+        print(f"[Pred] Saved to result/{fname}")
 
 def run_all():
-    csv_files = os.listdir("./data/sentence")
+    csv_files = os.listdir("./data/preprocessed")
     for csv in csv_files:
         LabelHarassment(csv)
 
+# df1.loc[:,'label'][df1.label != 0] = xgbc.predict(df1[df1.label!=0][['accused', 'combined_sentiments']])
+# df.loc[df.label != 0 & df.label != 1 , 'label'] = xgbc.predict(df[df.label != 0 & df.label != 1][['accused', 'combined_sentiments']])
+
 if __name__ == "__main__":
-    main()
+    n = LabelHarassment("data/preprocessed/臺灣澎湖地方法院.csv")
