@@ -1,9 +1,10 @@
 from sklearn.model_selection import train_test_split, KFold
 from xgboost import XGBClassifier
 import pandas as pd
+from w2v import get_sentence
 # from ckiptagger import WS
-from snownlp import SnowNLP, sentiment
-from utils import conv_yn, reason_normalize, reserve, context_clean
+from snownlp import SnowNLP
+from utils import conv_yn, reason_normalize, reserve, clean_context
 
 
 def get_sentiments(s):
@@ -44,7 +45,7 @@ def preprocessing():
     df['reason'] = df.理由.apply(get_sentiments)
     df['label'] = df.label_.apply(conv_yn)
     df['accused'] = df.案由.apply(reason_normalize).apply(reserve)
-    df['annotation'] = df.備註.apply(annotation)
+    df['annotation'] = df.備註.apply(annotation) # 此為無效指標
 
     df_parsed = df.drop(columns=['主文', '犯罪事實', '理由', '案例',
                                  '案由', '法院', '案號', 'label_', '備註'],
@@ -60,8 +61,9 @@ def preprocessing_combined():
     df.犯罪事實.fillna(" ", inplace=True)
     df.理由.fillna(" ", inplace=True)
 
+    # 將主文、犯罪事實、理由放在一起
     df['combine'] = df.apply(
-        lambda x: f"{x.主文} {x.犯罪事實} {x.理由}", axis=1).apply(context_clean).apply(get_sentiments)
+        lambda x: f"{x.主文} {x.犯罪事實} {x.理由}", axis=1).apply(clean_context).apply(get_sentiments)
     df['label'] = df.label_.apply(conv_yn)
     df['accused'] = df.案由.apply(reason_normalize).apply(reserve)
 
@@ -70,6 +72,8 @@ def preprocessing_combined():
     df_parsed = df.drop(columns=['主文', '犯罪事實', '理由', '案例',
                                  '案由', '法院', '案號', 'label_', '備註'],
                         axis=1)
+    df_parsed['sentences'] = df.apply(
+        lambda x: f"{x.主文} {x.犯罪事實} {x.理由}", axis=1).apply(clean_context).apply(get_sentence)
     df_parsed.to_csv("data/follow_matrix.csv", index=False)
     return df_parsed
 
@@ -81,8 +85,8 @@ df_parsed = preprocessing_combined()
 x_train, x_test, y_train, y_test = train_test_split(df_parsed[['combine', 'accused']],
                                                     df_parsed['label'], test_size=0.25, random_state=42)
 
-
-xgbc = XGBClassifier(learning_rate=0.5)
+df_parsed.to_csv("data/follow_combined.csv", index=False)
+xgbc = XGBClassifier(learning_rate=0.6)
 xgbc.fit(x_train, y_train)
 # xgbc.save_model()
 

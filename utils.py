@@ -1,11 +1,19 @@
 import re
 import pandas as pd
 from zhon.hanzi import punctuation
+from gensim.models.word2vec import Word2Vec
+
+with open("data/reserved") as f:
+    reserved = [l.rstrip("\n") for l in f]
+with open("data/excluded") as f:
+    excluded = [l.rstrip("\n") for l in f]
+
+model = Word2Vec.load("data/wiki_w2v_100/wiki_verdict_add_words.model")
 
 def read_csv_to_fit(file_path):
     """Preprocessing the csv files, make them """
     df = pd.read_csv(file_path, names=['court', 'datetime', 'case_number', 'accuse_', 'reason_'])
-    df['reason'] = df.reason_.apply(context_clean) # Clean text
+    df['reason'] = df.reason_.apply(clean_context) # Clean text
     
     df['accuse'] = df.accuse_.apply(reason_normalize).apply(reserve) # Convert accuse into 0, 0.5, 1
 
@@ -35,11 +43,6 @@ def to_num(g):
     return cv[g]
 
 def reserve(s):
-    with open("data/reserved") as f:
-        reserved = [l.rstrip("\n") for l in f]
-    with open("data/excluded") as f:
-        excluded = [l.rstrip("\n") for l in f]
-
     if s in reserved:
         return 1
     elif s in excluded:
@@ -51,7 +54,17 @@ def reserve(s):
         for e in excluded:
             if e in s:
                 return 0
-        return 0.5 
+        return max_similarity(s) # 待找出相似性
+
+def max_similarity(s):
+    word_list = reserved + excluded
+    if model.wv.key_to_index.get(s, ''):
+        try:
+            return max([model.wv.similarity(e, s) for e in word_list])
+        except:
+            return 0.5
+    else:
+        return 0.5
 
 def nds(y):
     if bool(re.search('[壹貳參肆伍陸柒捌玖拾廿卅佰百仟千萬一二三四五六七八九十１２３４５６７８９０]', y)):

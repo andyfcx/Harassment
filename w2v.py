@@ -1,12 +1,11 @@
 import pandas as pd
-import json, os, sys
+import os, sys
 from gensim.models.word2vec import Word2Vec
 from snownlp import SnowNLP
 from time import time
 from utils import clean_context
 
 # sentences = []
-
 
 def clean_words(lst):
     cleaned = []
@@ -44,12 +43,13 @@ def read_csv(file_path):
     _, fn = os.path.split(file_path)
     print(f"[File] Loading {file_path}, {os.path.getsize(file_path)/1024/1024} MB")
     # global sentences
-    df = pd.read_csv(file_path, names=['court', 'datetime', 'case_number', 'accuse_', 'reason_'], sep=';')
+    df = pd.read_csv(file_path, names=['court', 'datetime', 'case_number', 'accuse', 'reason_'], sep=';')
     df.reason_.fillna(" ", inplace=True)
     df['reason'] = df.reason_.apply(clean_context)  # Clean text
-    df.drop(columns=['court', 'datetime', 'case_number', 'accuse_', 'reason_'], axis=1, inplace=True)
+    df.drop(columns=['court', 'datetime', 'case_number', 'reason_'], axis=1, inplace=True) # Do not drop accuse
     df['sentence'] = df.reason.apply(get_sentence)
-    df.to_csv("./data/sentence/{fn}")
+    df.to_csv(f"./data/sentence/{fn}", index=False)
+
 
     return df.sentence.sum()
 
@@ -60,8 +60,8 @@ def train_new(vocab_list, sentences):
     model_save_path = "./data/wiki_w2v_100/wiki_verdict.model"
     print("[W2V] Loading pre-trained model")
     model = Word2Vec.load("./data/wiki_w2v_100/wiki2019tw_word2vec_Skip-gram_d100.model")
+    
     print("[W2V] Start training ...")
-
     model.min_count = 1
     model.build_vocab([vocab_list], update=True)
     model.train(sentences, total_examples=model.corpus_count, epochs=model.epochs)
@@ -70,8 +70,6 @@ def train_new(vocab_list, sentences):
     print(f"[W2V] Training finished :{t1 - t0}. Save model to: {model_save_path}")
 
     model.save(model_save_path)
-
-
 
 
 def main():
@@ -87,9 +85,9 @@ def main():
     for f in csv_file:
         s = read_csv(f'./data/to_predict/{f}')
         sentences += s
-        print(f"[data] Sentences is now of {len(sentences)}, {sys.getsizeof(sentences)}")
+        print(f"[data] Sentences is now of {len(sentences)}, Mem: {sys.getsizeof(sentences)/1024/1024} MB")
 
-    train_new(vocab_list, sentences)
+    # train_new(vocab_list, sentences)
 
 
 if __name__ == "__main__":
