@@ -1,12 +1,16 @@
 import re
 import pandas as pd
+from snownlp import SnowNLP
 from zhon.hanzi import punctuation
 from gensim.models.word2vec import Word2Vec
+import jieba
 
 with open("data/reserved") as f:
     reserved = [l.rstrip("\n") for l in f]
 with open("data/excluded") as f:
     excluded = [l.rstrip("\n") for l in f]
+with open("data/excluded_reason") as f:
+    excluded_reason = [l.rstrip("\n") for l in f]
 
 model = Word2Vec.load("data/wiki_w2v_100/wiki_verdict_add_words.model")
 
@@ -36,12 +40,6 @@ def conv_yn(s):
     elif s=='N':
         return 0
 
-def to_num(g):
-    u = ['壹','貳','參','肆','伍','陸','柒','捌','玖','拾','廿','卅','一','二','三','四','五','六','七','八','九','十',0,'１','２','３','４','５','６','７','８','９','０','佰','仟','萬','百','千']
-    n = [1,2,3,4,5,6,7,8,9,10,20,30,1,2,3,4,5,6,7,8,9,10,0,1,2,3,4,5,6,7,8,9,0,100,1000,10000,100,1000]
-    cv = dict(zip(u,n))
-    return cv[g]
-
 def reserve(s):
     if s in reserved:
         return 1
@@ -54,17 +52,30 @@ def reserve(s):
         for e in excluded:
             if e in s:
                 return 0
-        return max_similarity(s) # 待找出相似性
+        return max_similarity(s)
 
 def max_similarity(s):
-    word_list = reserved + excluded
+
+    word_list = reserved  # 目前僅先處理保留字
+    if len(s) > max(len(item) for item in word_list):
+        return max(max_similarity(w) for w in seg(s))
+
     if model.wv.key_to_index.get(s, ''):
         try:
             return max([model.wv.similarity(e, s) for e in word_list])
         except:
-            return 0.5
+            return 0.3
     else:
-        return 0.5
+        return 0.3
+
+def seg(s):
+    return jieba.cut(s, cut_all=False)
+
+def to_num(g):
+    u = ['壹','貳','參','肆','伍','陸','柒','捌','玖','拾','廿','卅','一','二','三','四','五','六','七','八','九','十',0,'１','２','３','４','５','６','７','８','９','０','佰','仟','萬','百','千']
+    n = [1,2,3,4,5,6,7,8,9,10,20,30,1,2,3,4,5,6,7,8,9,10,0,1,2,3,4,5,6,7,8,9,0,100,1000,10000,100,1000]
+    cv = dict(zip(u,n))
+    return cv[g]
 
 def nds(y):
     if bool(re.search('[壹貳參肆伍陸柒捌玖拾廿卅佰百仟千萬一二三四五六七八九十１２３４５６７８９０]', y)):
@@ -194,3 +205,21 @@ def to_money(x):
         return res
     else:
         return '＊'+x
+
+
+def get_sentiments(s):
+    sentiments_of_emptystring = 0.5262327818078083
+    try:
+        ss = SnowNLP(s)
+        sen = ss.sentiments
+    except ZeroDivisionError:
+        sen = sentiments_of_emptystring
+    return (sen - sentiments_of_emptystring)/(1-sentiments_of_emptystring)
+
+
+def get_summary(s):
+    try:
+        ss = SnowNLP(s)
+        return ss.summary(3)
+    except ZeroDivisionError:
+        return []

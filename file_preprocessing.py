@@ -3,9 +3,14 @@ import os, sys
 from gensim.models.word2vec import Word2Vec
 from snownlp import SnowNLP
 from time import time
-from utils import clean_context
+from utils import clean_context, get_sentiments, reason_normalize, reserve
 
-# sentences = []
+with open("data/excluded") as f:
+    excluded = [l.rstrip("\n") for l in f]
+
+with open("data/reserved") as f:
+    reserved = [l.rstrip("\n") for l in f]
+vocab_list = excluded + reserved
 
 def clean_words(lst):
     cleaned = []
@@ -42,18 +47,22 @@ def read_csv(file_path):
     """Read csv as df and get all sentences, add to outer global variable sentences"""
     _, fn = os.path.split(file_path)
     print(f"[File] Loading {file_path}, {os.path.getsize(file_path)/1024/1024} MB")
-    # global sentences
-    df = pd.read_csv(file_path, names=['court', 'datetime', 'case_number', 'accuse', 'reason_'], sep=';')
+    df = pd.read_csv(file_path, names=['court', 'datetime', 'case_number', 'accused_', 'reason_'], sep=';')
     df.reason_.fillna(" ", inplace=True)
     df['reason'] = df.reason_.apply(clean_context)  # Clean text
-    df.drop(columns=['court', 'datetime', 'case_number', 'reason_'], axis=1, inplace=True) # Do not drop accuse
-    df['sentence'] = df.reason.apply(get_sentence)
-    df.to_csv(f"./data/sentence/{fn}", index=False)
+    df['accused'] = df.accused_.apply(reason_normalize).apply(reserve)
+    df['combined_sentiments'] = df.reason.apply(get_sentiments)
+    # df.drop(columns=['court', 'datetime', 'case_number', 'reason_'], axis=1, inplace=True) # Do not drop accuse
+    df.drop(columns=['accused_','reason_'], axis=1, inplace=True)  # Do not drop accuse, case_number
+    # df['sentence'] = df.reason.apply(get_sentence)
+    print(df.columns)
+    df.to_csv(f"./data/preprocessed/{fn}", index=False)
+
+    # return df.sentence.sum()
 
 
-    return df.sentence.sum()
-
-
+def try_one():
+    read_csv('./data/to_predict/臺灣苗栗地方法院.csv')
 
 def train_new(vocab_list, sentences):
     t0 = time()
@@ -73,22 +82,17 @@ def train_new(vocab_list, sentences):
 
 
 def main():
-    with open("data/excluded") as f:
-        excluded = [l.rstrip("\n") for l in f]
 
-    with open("data/reserved") as f:
-        reserved = [l.rstrip("\n") for l in f]
-    vocab_list = excluded + reserved
-
-    csv_file = os.listdir('./data/to_predict')
+    csv_file = os.listdir('./data/to_predict') # sep=';'
     sentences = []
     for f in csv_file:
-        s = read_csv(f'./data/to_predict/{f}')
-        sentences += s
+        read_csv(f'./data/to_predict/{f}')
+        # sentences += s
         print(f"[data] Sentences is now of {len(sentences)}, Mem: {sys.getsizeof(sentences)/1024/1024} MB")
 
     # train_new(vocab_list, sentences)
 
 
 if __name__ == "__main__":
-    main()
+    # main()
+    try_one()

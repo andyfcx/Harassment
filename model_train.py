@@ -1,28 +1,9 @@
-from sklearn.model_selection import train_test_split, KFold
+from sklearn.model_selection import train_test_split
 from xgboost import XGBClassifier
 import pandas as pd
-from w2v import get_sentence
+from file_preprocessing import get_sentence
 # from ckiptagger import WS
-from snownlp import SnowNLP
-from utils import conv_yn, reason_normalize, reserve, clean_context
-
-
-def get_sentiments(s):
-    sentiments_of_emptystring = 0.5262327818078083
-    try:
-        ss = SnowNLP(s)
-        sen = ss.sentiments
-    except ZeroDivisionError:
-        sen = sentiments_of_emptystring
-    return (sen - sentiments_of_emptystring)/(1-sentiments_of_emptystring)
-
-
-def get_summary(s):
-    try:
-        ss = SnowNLP(s)
-        return ss.summary(3)
-    except ZeroDivisionError:
-        return []
+from utils import conv_yn, reason_normalize, reserve, clean_context, get_sentiments
 
 
 def annotation(s):
@@ -62,7 +43,7 @@ def preprocessing_combined():
     df.理由.fillna(" ", inplace=True)
 
     # 將主文、犯罪事實、理由放在一起
-    df['combine'] = df.apply(
+    df['combined_sentiments'] = df.apply(
         lambda x: f"{x.主文} {x.犯罪事實} {x.理由}", axis=1).apply(clean_context).apply(get_sentiments)
     df['label'] = df.label_.apply(conv_yn)
     df['accused'] = df.案由.apply(reason_normalize).apply(reserve)
@@ -82,13 +63,13 @@ df_parsed = preprocessing_combined()
 # x_train, x_test, y_train, y_test = train_test_split(df_parsed[['judge', 'facts', 'reason', 'accused']],
 #                                                     df_parsed['label'], test_size=0.25, random_state=42)
 
-x_train, x_test, y_train, y_test = train_test_split(df_parsed[['combine', 'accused']],
+x_train, x_test, y_train, y_test = train_test_split(df_parsed[['combined_sentiments', 'accused']],
                                                     df_parsed['label'], test_size=0.25, random_state=42)
 
 df_parsed.to_csv("data/follow_combined.csv", index=False)
 xgbc = XGBClassifier(learning_rate=0.6)
 xgbc.fit(x_train, y_train)
-# xgbc.save_model()
+xgbc.save_model('m1.model')
 
 
 # cv = KFold(n_splits=5, shuffle=True, random_state=100)
