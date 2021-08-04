@@ -55,7 +55,7 @@ def reserve(s):
         return max_similarity(s)
 
 def max_similarity(s):
-
+    """Calculate the max similarity in word_list, if the word is too long, seg it."""
     word_list = reserved  # 目前僅先處理保留字
     if len(s) > max(len(item) for item in word_list):
         return max(max_similarity(w) for w in seg(s))

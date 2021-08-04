@@ -1,8 +1,18 @@
 ## 使用工具
  - SnowNLP: 提供情感分析、文章摘要、切詞
- - CKIP: 切詞
  - XGBoost: 分類
  - gensim: Word2Vec
+    1. 使用預訓練過的模型：由此下載 https://drive.google.com/uc?export=download&id=1ZJui-EuBUx-NLy9NjQy_peWo5NX2dxCY
+    2. finetune_model.py 將沒有在模型中但必要的字詞加進去，因為主要使用相似值，故向量本身的norm不影響
+
+## 欄位名稱說明
+ - 案由: accused_, 數值化處理後為accused
+ - 案號: case_number
+ - 判決理由: reason
+ - 犯罪事實: facts
+ - 判決書情義分數: combined_sentiments 
+ - 是否與跟騷有關: label
+ 
 ## 判斷流程參考
 1. 先 filter 案由
     1. 可保留的：

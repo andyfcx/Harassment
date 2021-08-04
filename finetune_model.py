@@ -8,7 +8,7 @@ def check_sim(lst: List[str]):
     print('+'.join(s))
     # return v
 
-
+# https://drive.google.com/uc?export=download&id=1ZJui-EuBUx-NLy9NjQy_peWo5NX2dxCY
 model = Word2Vec.load("data/wiki_w2v_100/wiki2019tw_word2vec_Skip-gram_d100.model")
 
 word_list = {
