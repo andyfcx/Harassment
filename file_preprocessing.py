@@ -3,6 +3,8 @@ import os, sys
 from gensim.models.word2vec import Word2Vec
 from snownlp import SnowNLP
 from time import time
+
+from configs import W2V_MODEL_PATH
 from utils import clean_context, get_sentiments, reason_normalize, reserve
 
 with open("data/excluded") as f:
@@ -62,15 +64,13 @@ def read_csv(file_path):
     t1 = time()
     print(f"[Time] Used {t1 - t0} sec")
     return df
-    # return df.sentence.sum()
-
 
 def try_one():
     read_csv('./data/to_predict/臺灣澎湖地方法院.csv')
 
 def train_new(vocab_list, sentences):
     t0 = time()
-    model_save_path = "./data/wiki_w2v_100/wiki_verdict.model"
+    model_save_path = W2V_MODEL_PATH
     print("[W2V] Loading pre-trained model")
     model = Word2Vec.load("./data/wiki_w2v_100/wiki2019tw_word2vec_Skip-gram_d100.model")
     
@@ -95,7 +95,6 @@ def main():
         print(f"[data] Sentences is now of {len(sentences)}, Mem: {sys.getsizeof(sentences)/1024/1024} MB")
 
     # train_new(vocab_list, sentences)
-
 
 if __name__ == "__main__":
     # main()

@@ -1,6 +1,8 @@
 from sklearn.model_selection import train_test_split
 from xgboost import XGBClassifier
 import pandas as pd
+
+from configs import XGB_MODEL_FILE
 from file_preprocessing import get_sentence
 # from ckiptagger import WS
 from utils import conv_yn, reason_normalize, reserve, clean_context, get_sentiments
@@ -69,7 +71,7 @@ x_train, x_test, y_train, y_test = train_test_split(df_parsed[['combined_sentime
 df_parsed.to_csv("data/follow_combined.csv", index=False)
 xgbc = XGBClassifier(learning_rate=0.6)
 xgbc.fit(x_train, y_train)
-xgbc.save_model('m1.model')
+xgbc.save_model(XGB_MODEL_FILE)
 
 
 # cv = KFold(n_splits=5, shuffle=True, random_state=100)

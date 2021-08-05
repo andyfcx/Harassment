@@ -1,5 +1,7 @@
 from gensim.models.word2vec import Word2Vec
 from typing import List
+from configs import W2V_MODEL_PATH
+
 
 def check_sim(lst: List[str]):
     v = sum([model.wv[word] for word in lst])
@@ -48,4 +50,4 @@ for k, v in word_list.items():
         wv.add_vector(k, v)
         model.wv = wv
 
-model.save("data/wiki_w2v_100/wiki_verdict_add_words.model")
+model.save(W2V_MODEL_PATH)

@@ -1,3 +1,8 @@
+## Quick start
+
+`python3 process_csv.py data/to_predict/臺灣澎湖地方法院.csv`
+Or check `example.py`
+
 ## 使用工具
  - SnowNLP: 提供情感分析、文章摘要、切詞
  - XGBoost: 分類
@@ -12,6 +17,11 @@
  - 犯罪事實: facts
  - 判決書情義分數: combined_sentiments 
  - 是否與跟騷有關: label
+
+## 檔案目錄
+ - data/to_predict 原始資料
+ - data/preprocessed 預處理後中間存擋
+ - result/ 加上label後的結果
  
 ## 判斷流程參考
 1. 先 filter 案由
