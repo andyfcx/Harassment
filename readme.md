@@ -18,9 +18,15 @@ Or check `example.py`
  - 判決書情義分數: combined_sentiments 
  - 是否與跟騷有關: label
 
+## 新增feature的處理
+如果需要新增欄位作為新的feature，需要處理：
+ - model_train.py : preprocessing_combined
+ - model_pred.py: class LabelHarassment
+加上相對應的新欄位重新訓練XGBClassifier，然後用新的model去predict
+
 ## 檔案目錄
  - data/to_predict 原始資料
- - data/preprocessed 預處理後中間存擋
+ - data/preprocessed 預處理後中間存檔，將','換成';'並且用;來當csv分隔符號
  - result/ 加上label後的結果
  
 ## 判斷流程參考
