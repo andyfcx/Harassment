@@ -63,6 +63,16 @@ class LabelHarassment():
 
     def predict(self, fname):
         """Predict using XGBClassifier, exclude pre-labeled 0 and 1"""
+        # Here's SQL-like explaination to the following code:
+
+        # SELECT DATA TO FIT:
+        # select accused, combined_sentiments from df
+        # where label != 0 and label != 1
+
+        # UPDATE LABEL BACK TO YOUR DF
+        # update df
+        # set label= (label you get)
+        # where label!=0 and label!=1
         self.df.loc[(self.df.label != 0) & (self.df.label != 1), 'label'] = self.xgbc.predict(self.df[(self.df.label != 0) & (self.df.label != 1)][['accused', 'combined_sentiments']])
 
         self.df.to_csv(f"{OUTPUT_DIR}{fname}", index=False)
